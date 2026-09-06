@@ -36,6 +36,7 @@ python server.py
 - 总和模型明细以及两个账户各自的独立明细，Token 表格使用 M 为单位。
 - 最近已观测重置周期的总可用等效 API 价值推测、折线图和数据表。
 - 当前 OpenAI Standard 价目表中的 GPT-5.5、GPT-5.6 系列和 GPT-6 系列。
+- “官方现价 / 原价”一键切换；卡片、账户明细、周期推测和 CSV 会同步使用所选口径。
 - 本轮、最近 7 天、30 天、全部历史、账户、软件和历史轮次筛选，以及 CSV 导出。
 
 账户默认显示为 `Team A · Codex App` 和 `Team B · OMP`，可修改 `config.json` 中的 `labels`。
@@ -56,6 +57,17 @@ Codex 数据来自 `~/.codex/sessions` 与 `~/.codex/archived_sessions`，只纳
 ```
 
 适用模型单次请求超过 272,000 输入 Token 时使用官方长上下文价格。输出已经包含 reasoning，不重复相加。价格来源是 [OpenAI 官方 Standard API 价格](https://developers.openai.com/api/docs/pricing)；历史也按当前价格重估，因此结果是比较指标，不是订阅扣款或实际 API 账单。未知模型或缺失计费类别显示“待定”。
+
+“原价”是用户提供的另一套比较口径，并非 OpenAI 官方价格。单位均为 USD / 1M tokens：
+
+| 模型 | input | output | cache write | cache read |
+| --- | ---: | ---: | ---: | ---: |
+| GPT-5.6 Luna | 1 | 6 | 1.25 | 0.1 |
+| GPT-5.6 Terra | 2.5 | 12.5 | 3.125 | 0.25 |
+| GPT-5.6 Sol | 5 | 30 | 6.25 | 0.25 |
+| GPT-6 Astra | 10 | 50 | 12.5 | 动态推测 |
+
+Astra 的原价 cache read 使用各账户最近一个含 Astra 缓存读取的轮次，先将已知原价折算成 `baseCap`，再求解使各账户 `baseCap + cacheReadRate × cachedCap` 尽量相等的非负最小二乘值。当前值会直接显示在前端价目表说明中；不足两个有效账户或结果超出 0–10 USD / 1M tokens 时保持待定。
 
 整轮总可用等效价值推测公式：
 
