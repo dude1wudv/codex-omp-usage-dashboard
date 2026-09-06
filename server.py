@@ -24,7 +24,14 @@ def read_json(p, default):
     try: return json.loads(Path(p).read_text(encoding='utf-8'))
     except (OSError,ValueError): return default
 def save(p,data):
-    tmp=Path(str(p)+'.tmp');tmp.write_text(json.dumps(data,ensure_ascii=False),encoding='utf-8');tmp.replace(p)
+    payload=json.dumps(data,ensure_ascii=False)
+    tmp=Path(f'{p}.{os.getpid()}.{threading.get_ident()}.tmp')
+    tmp.write_text(payload,encoding='utf-8')
+    try: os.replace(tmp,p)
+    except OSError:
+        # Some Windows EFS folders reject even same-directory atomic renames.
+        tmp.unlink(missing_ok=True)
+        Path(p).write_text(payload,encoding='utf-8')
 def account_id(raw): return hashlib.sha256(raw.encode()).hexdigest()[:12] if raw else None
 
 def cycle_estimates(cycles, observations, events):
