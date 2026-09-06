@@ -71,33 +71,6 @@ def cycle_estimates(cycles, observations, events, pricing_mode='current'):
             'eventCount':len(rows),'unknownPriceEvents':unknown})
     return sorted(result,key=lambda x:x['end'])
 
-def infer_original_astra(estimates,events):
-    provisional=pricing.original_prices(0.0)
-    latest={}
-    for cycle in estimates:
-        if not cycle.get('observedAt') or not cycle.get('usedPercent') or cycle['usedPercent']<=0:continue
-        start=datetime.fromisoformat(cycle['start'].replace('Z','+00:00'))
-        observed=datetime.fromisoformat(cycle['observedAt'].replace('Z','+00:00'))
-        rows=[e for e in events if e['account']==cycle['account'] and start<=datetime.fromisoformat(e['ts'].replace('Z','+00:00'))<=observed]
-        base=0.0;cached=0.0;unknown=0
-        for event in rows:
-            amount=pricing.value(event,provisional)
-            if amount is None:unknown+=1
-            else:base+=amount
-            if event['model']=='gpt-6-astra':cached+=event['cached']/1_000_000
-        if cached<=0 or unknown:continue
-        used=cycle['usedPercent']/100
-        sample={'account':cycle['account'],'end':cycle['end'],'baseCap':base/used,
-                'cachedCap':cached/used,'unknownPriceEvents':unknown}
-        previous=latest.get(cycle['account'])
-        if previous is None or sample['end']>previous['end']:latest[cycle['account']]=sample
-    samples=list(latest.values())
-    rate=pricing.infer_equal_cap_cached_rate(samples)
-    inference={'method':'equal-weekly-cap least squares','observations':len(samples),
-               'estimatedAstraCacheRead':rate,
-               'note':'假设各账户每周总限额大致相同；使用每个账户最近含 Astra cache read 的轮次。'}
-    return rate,inference
-
 def codex_identity():
     data=read_json(Path.home()/'.codex'/'auth.json',{})
     t=data.get('tokens') or {}
@@ -219,14 +192,12 @@ def collect():
             quota_history.append({'account':a['id'],'ts':q['observedAt'],'usedPercent':q.get('usedPercent'),
                                   'resetsAt':datetime.fromisoformat(q['resetsAt'].replace('Z','+00:00')).timestamp()})
     estimates=cycle_estimates(cycles,quota_history,events)
-    astra_cached,inference=infer_original_astra(estimates,events)
-    original_prices=pricing.original_prices(astra_cached,inference)
+    original_prices=pricing.original_prices()
     for e in events:e['costs']={'current':e['cost'],'original':pricing.value(e,original_prices)}
     original_estimates=cycle_estimates(cycles,quota_history,events,'original')
     unknown=sum(e['cost'] is None for e in events)
     if unknown:warnings.append(f'{unknown:,} 条记录的模型或计价类别没有官方可核实价格，价值合计仅包含已定价部分。')
-    if astra_cached is None:warnings.append('Astra 原价 cache read 缺少两个完整的有效账户轮次，暂时无法推测。')
-    else:warnings.append(f'Astra 原价 cache read 当前推测为 ${astra_cached:.4f}/1M tokens，依据 {inference["observations"]} 个账户最近的有效轮次动态计算。')
+    warnings.append('Astra 原价 cache read 按用户指定固定为 $1/1M tokens。')
     warnings.append('账户按你确认的固定软件对应关系归集；总用量仅涵盖本机保留的记录，不能代表云端、其他设备或已删除历史。')
     warnings.append('Codex 历史日志没有逐次 OAuth 身份字段，按 Desktop / OpenAI 来源归集；7 天窗口来自实际重置快照，提前重置的轮次起点只能按结束时间减 7 天估算。')
     warnings.append('整轮总可用等效价值按“本机已定价用量价值 ÷ 最后观测使用比例”推测；它受本机历史完整度和模型价值结构影响，不是官方额度或承诺价值。')

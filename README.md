@@ -65,9 +65,9 @@ Codex 数据来自 `~/.codex/sessions` 与 `~/.codex/archived_sessions`，只纳
 | GPT-5.6 Luna | 1 | 6 | 1.25 | 0.1 |
 | GPT-5.6 Terra | 2.5 | 12.5 | 3.125 | 0.25 |
 | GPT-5.6 Sol | 5 | 30 | 6.25 | 0.25 |
-| GPT-6 Astra | 10 | 50 | 12.5 | 动态推测 |
+| GPT-6 Astra | 10 | 50 | 12.5 | 1 |
 
-Astra 的原价 cache read 使用各账户最近一个含 Astra 缓存读取的轮次，先将已知原价折算成 `baseCap`，再求解使各账户 `baseCap + cacheReadRate × cachedCap` 尽量相等的非负最小二乘值。当前值会直接显示在前端价目表说明中；不足两个有效账户或结果超出 0–10 USD / 1M tokens 时保持待定。
+Astra 的原价 cache read 固定为 1 USD / 1M tokens，不再根据每周限额动态推测。
 
 整轮总可用等效价值推测公式：
 

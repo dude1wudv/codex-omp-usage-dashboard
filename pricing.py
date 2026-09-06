@@ -13,24 +13,13 @@ ORIGINAL_RATES = {
     'gpt-5.6-sol': [5.0, 0.25, 6.25, 30.0],
 }
 
-def infer_equal_cap_cached_rate(samples):
-    """Fit A + rate*B = common weekly cap using least squares."""
-    usable=[s for s in samples if s['cachedCap']>0]
-    if len(usable)<2:return None
-    mean_a=sum(s['baseCap'] for s in usable)/len(usable)
-    mean_b=sum(s['cachedCap'] for s in usable)/len(usable)
-    variance=sum((s['cachedCap']-mean_b)**2 for s in usable)
-    if variance<=1e-12:return None
-    rate=-sum((s['cachedCap']-mean_b)*(s['baseCap']-mean_a) for s in usable)/variance
-    return rate if 0<=rate<=10 else None
-
-def original_prices(astra_cached_rate=None, inference=None):
+def original_prices():
     models={model:{'short':rates,'long':None,'threshold':None} for model,rates in ORIGINAL_RATES.items()}
-    models['gpt-6-astra']={'short':[10.0,astra_cached_rate,12.5,50.0],'long':None,'threshold':None}
-    return {'source':'用户提供原价；Astra cache read 由本机周限额等量假设推测',
+    models['gpt-6-astra']={'short':[10.0,1.0,12.5,50.0],'long':None,'threshold':None}
+    return {'source':'用户提供的固定原价',
             'updatedAt':datetime.now(timezone.utc).isoformat(),
             'basis':'Original / USD per 1M tokens / input, cache read, cache write, output',
-            'inference':inference or {},'models':models}
+            'astraCacheReadSource':'user-fixed','models':models}
 
 def parse_prices(text):
     section = text.split('### Standard pricing data', 1)[1].split('### Batch pricing data', 1)[0]

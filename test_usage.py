@@ -15,14 +15,14 @@ try:  # Works both as ``python -m unittest outputs.dashboard.test_usage`` and di
     from .codex_reader import parse
     from .identity import stable_id
     from . import omp_reader
-    from .pricing import infer_equal_cap_cached_rate, original_prices, parse_prices, value
+    from .pricing import original_prices, parse_prices, value
     from .server import cycle_estimates
 except ImportError:  # pragma: no cover - only used for direct script execution.
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from codex_reader import parse
     from identity import stable_id
     import omp_reader
-    from pricing import infer_equal_cap_cached_rate, original_prices, parse_prices, value
+    from pricing import original_prices, parse_prices, value
     from server import cycle_estimates
 
 
@@ -347,15 +347,12 @@ class PricingTests(unittest.TestCase):
         # an input token.
         self.assertIsNone(value(_event("gpt-5.5", 1, write=1, output=1), self.prices))
 
-    def test_original_rates_and_astra_equal_cap_inference(self):
-        samples=[{'baseCap':56.0,'cachedCap':8.0},{'baseCap':54.0,'cachedCap':20.0}]
-        rate=infer_equal_cap_cached_rate(samples)
-        self.assertAlmostEqual(1/6,rate)
-        prices=original_prices(rate)
+    def test_user_fixed_original_rates(self):
+        prices=original_prices()
         self.assertEqual([1.0,0.1,1.25,6.0],prices['models']['gpt-5.6-luna']['short'])
         self.assertEqual([2.5,0.25,3.125,12.5],prices['models']['gpt-5.6-terra']['short'])
         self.assertEqual([5.0,0.25,6.25,30.0],prices['models']['gpt-5.6-sol']['short'])
-        self.assertEqual([10.0,rate,12.5,50.0],prices['models']['gpt-6-astra']['short'])
+        self.assertEqual([10.0,1.0,12.5,50.0],prices['models']['gpt-6-astra']['short'])
 
 
 class CycleEstimateTests(unittest.TestCase):
