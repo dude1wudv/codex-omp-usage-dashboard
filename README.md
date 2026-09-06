@@ -122,7 +122,7 @@ python server.py --snapshot
 
 ## 最新发布
 
-当前稳定版本：[v1.0.0](https://github.com/dude1wudv/codex-omp-usage-dashboard/releases/tag/v1.0.0)。该版本包含订阅折算价作为默认口径、官方 API 价对照、账户明细上下排列、悬停图表提示、周期估算图表、CSV 导出和 Windows 桌面快捷方式支持。
+当前稳定版本：[v1.0.0](https://github.com/dude1wudv/codex-omp-usage-dashboard/releases/tag/v1.0.0)。该版本包含订阅折算价作为默认口径、官方 API 价对照、账户明细上下排列、悬停图表提示、周期估算图表、CSV 导出和 Windows 桌面快捷方式支持。完整变更记录见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
 
 ## License
 
