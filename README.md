@@ -1,14 +1,32 @@
 # Codex + OMP 本地用量看板
 
-一个只在本机运行的用量分析看板，读取 Codex App 和 [OMP](https://github.com/can1357/oh-my-pi) 已保存的会话用量与 OAuth 配额快照，按 OpenAI 当前 Standard API 价格估算等效价值。
+一个只在本机运行的 Codex App + [OMP](https://github.com/can1357/oh-my-pi) 用量分析看板。它读取两个固定 Team 账户的本地会话记录与 OAuth 7 天配额快照，按模型拆分 token、订阅折算价和官方 API 价，并估算每轮重置周期的总可用等效价值。
 
 本项目是社区工具，与 OpenAI 无隶属或官方合作关系。
 
-![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB) ![License MIT](https://img.shields.io/badge/License-MIT-green)
+![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB) ![Windows](https://img.shields.io/badge/Windows-10%2F11-0078D6) ![License MIT](https://img.shields.io/badge/License-MIT-green) [![Latest release](https://img.shields.io/github/v/release/dude1wudv/codex-omp-usage-dashboard?display_name=tag)](https://github.com/dude1wudv/codex-omp-usage-dashboard/releases)
 
 ## 界面预览
 
-![Codex 与 OMP 每日用量看板](assets/dashboard-preview.png)
+下面的截图来自实际运行中的本地前端；数值会随本机日志、账户配额和当前筛选条件变化。
+
+### 概览与价格口径
+
+![概览、账户轮次与订阅折算价](assets/dashboard-overview.png)
+
+### 每日用量与模型趋势
+
+![每日 token 柱状图和模型趋势图](assets/dashboard-charts.png)
+
+### 两个账户的独立模型明细
+
+![Team A 与 Team B 账户明细](assets/dashboard-account-details.png)
+
+### 重置周期总可用等效 API 价值
+
+![最近重置周期估算折线图和数据表](assets/dashboard-cycle-estimates.png)
+
+早期的简洁预览仍保留在 [assets/dashboard-preview.png](assets/dashboard-preview.png)，方便快速查看整体风格。
 
 ## 一键启动
 
@@ -38,6 +56,10 @@ python server.py
 - 当前 OpenAI Standard 价目表中的 GPT-5.5、GPT-5.6 系列和 GPT-6 系列。
 - “订阅折算价 / 官方 API 价”一键切换；默认使用订阅折算价，卡片、账户明细、周期推测和 CSV 会同步使用所选口径。
 - 本轮、最近 7 天、30 天、全部历史、账户、软件和历史轮次筛选，以及 CSV 导出。
+
+### 默认账户映射
+
+看板按你的本地使用方式固定映射：Codex App 对应一个 Team 账户，OMP 对应另一个 Team 账户。程序不会根据日志正文猜测身份；首次绑定后如果 OAuth 登录身份变化，会保留旧历史并提示核对。
 
 账户默认显示为 `Team A · Codex App` 和 `Team B · OMP`，可修改 `config.json` 中的 `labels`。
 
@@ -97,6 +119,10 @@ python server.py --snapshot
 第二条命令会扫描本机数据并输出不含凭据和消息正文的安全汇总。
 
 供自动化编码 Agent 使用的部署步骤见 [AI_DEPLOY.md](AI_DEPLOY.md)。
+
+## 最新发布
+
+当前稳定版本：[v1.0.0](https://github.com/dude1wudv/codex-omp-usage-dashboard/releases/tag/v1.0.0)。该版本包含订阅折算价作为默认口径、官方 API 价对照、账户明细上下排列、悬停图表提示、周期估算图表、CSV 导出和 Windows 桌面快捷方式支持。
 
 ## License
 
