@@ -6,6 +6,10 @@
 
 ![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB) ![License MIT](https://img.shields.io/badge/License-MIT-green)
 
+## 界面预览
+
+![Codex 与 OMP 每日用量看板](assets/dashboard-preview.png)
+
 ## 一键启动
 
 适用于 Windows 10/11，需要安装 Python 3.10 或更高版本，并已登录 Codex App 和 OMP。
