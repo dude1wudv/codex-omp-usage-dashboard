@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.local-state/
+work/
+*.log
+server.pid
+.DS_Store
+.pytest_cache/
