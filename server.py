@@ -192,12 +192,12 @@ def collect():
             quota_history.append({'account':a['id'],'ts':q['observedAt'],'usedPercent':q.get('usedPercent'),
                                   'resetsAt':datetime.fromisoformat(q['resetsAt'].replace('Z','+00:00')).timestamp()})
     estimates=cycle_estimates(cycles,quota_history,events)
-    original_prices=pricing.original_prices()
+    original_prices=pricing.subscription_prices()
     for e in events:e['costs']={'current':e['cost'],'original':pricing.value(e,original_prices)}
     original_estimates=cycle_estimates(cycles,quota_history,events,'original')
     unknown=sum(e['cost'] is None for e in events)
     if unknown:warnings.append(f'{unknown:,} 条记录的模型或计价类别没有官方可核实价格，价值合计仅包含已定价部分。')
-    warnings.append('Astra 原价 cache read 按用户指定固定为 $1/1M tokens。')
+    warnings.append('订阅折算价由用户指定；Astra cache read 固定为 $1/1M tokens。')
     warnings.append('账户按你确认的固定软件对应关系归集；总用量仅涵盖本机保留的记录，不能代表云端、其他设备或已删除历史。')
     warnings.append('Codex 历史日志没有逐次 OAuth 身份字段，按 Desktop / OpenAI 来源归集；7 天窗口来自实际重置快照，提前重置的轮次起点只能按结束时间减 7 天估算。')
     warnings.append('整轮总可用等效价值按“本机已定价用量价值 ÷ 最后观测使用比例”推测；它受本机历史完整度和模型价值结构影响，不是官方额度或承诺价值。')

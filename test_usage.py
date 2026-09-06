@@ -347,7 +347,7 @@ class PricingTests(unittest.TestCase):
         # an input token.
         self.assertIsNone(value(_event("gpt-5.5", 1, write=1, output=1), self.prices))
 
-    def test_user_fixed_original_rates(self):
+    def test_user_fixed_subscription_rates(self):
         prices=original_prices()
         self.assertEqual([1.0,0.1,1.25,6.0],prices['models']['gpt-5.6-luna']['short'])
         self.assertEqual([2.5,0.25,3.125,12.5],prices['models']['gpt-5.6-terra']['short'])

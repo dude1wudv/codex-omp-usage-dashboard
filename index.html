@@ -106,11 +106,15 @@
     .price-note { margin: 0 18px 17px; padding: 10px 11px; border-radius: 10px; background: #f7f8fa; color: var(--muted); font-size: 12px; line-height: 1.55; }
     .price-table th, .price-table td { padding: 9px 12px; font-size: 12px; }
     .price-table th { font-size: 11px; }
-    .account-details-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .account-details-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
     .account-model-card { min-width: 0; }
     .account-model-card .table-head { padding: 18px 18px 10px; }
     .account-model-card .table-head h3 { margin: 0; font-size: 17px; }
     .account-model-card .table-head p { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .account-model-card .table-scroll { overflow-x: visible; }
+    .account-model-card table { table-layout: fixed; }
+    .account-model-card th:first-child, .account-model-card td:first-child { width: 22%; }
+    .account-model-card th, .account-model-card td { padding-left: 12px; padding-right: 12px; }
     .account-empty { padding: 28px 18px; color: var(--muted); font-size: 13px; text-align: center; }
     .footnote { margin-top: 12px; color: var(--muted); font-size: 12px; line-height: 1.6; }
     .status { min-height: 21px; margin-top: 10px; color: var(--muted); font-size: 12px; }
@@ -121,7 +125,6 @@
       .page { padding: 34px 20px 60px; }
       .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .split { grid-template-columns: 1fr; }
-      .account-details-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 620px) {
       .page { padding: 24px 14px 46px; }
@@ -169,8 +172,8 @@
           <select id="cycleSelect" class="select" aria-label="轮次筛选"><option value="current">当前轮次</option></select>
           <select id="appFilter" class="select" aria-label="软件筛选"><option value="all">所有软件</option><option value="Codex">Codex</option><option value="OMP">OMP</option></select>
           <div id="pricingControl" class="segmented" aria-label="定价方式">
-            <button type="button" data-pricing="current" class="active">官方现价</button>
-            <button type="button" data-pricing="original">原价</button>
+            <button type="button" data-pricing="original" class="active">订阅折算价</button>
+            <button type="button" data-pricing="current">官方 API 价</button>
           </div>
         </div>
       </div>
@@ -180,7 +183,7 @@
         <article class="card metric green"><div class="metric-label">累计 token</div><div id="totalTokens" class="metric-value skeleton">—</div><div id="totalTokensSub" class="metric-sub">当前选择时间范围</div></article>
         <article class="card metric purple"><div class="metric-label">累计等效 API 价值</div><div id="totalCost" class="metric-value skeleton">—</div><div id="totalCostSub" class="metric-sub">已定价用量</div></article>
       </div>
-      <div id="rangeNotice" class="notice"><span class="icon">i</span><span>用量来自本机保留的会话记录，价值按官方当前 Standard API 价格估算。</span></div>
+      <div id="rangeNotice" class="notice"><span class="icon">i</span><span>用量来自本机保留的会话记录，价值默认按订阅内未同步降价的折算价格估算。</span></div>
     </section>
 
     <section class="section" aria-labelledby="quotaTitle">
@@ -221,7 +224,7 @@
     (() => {
       'use strict';
       const COLORS = ['#2f6cc5', '#f58b3a', '#43b979', '#9274df', '#db68a3', '#38a6a1', '#aa6c3d', '#727982'];
-      const state = { data: null, range: 'cycle', account: 'all', app: 'all', cycleKey: 'current', pricingMode: 'current', loading: false };
+      const state = { data: null, range: 'cycle', account: 'all', app: 'all', cycleKey: 'current', pricingMode: 'original', loading: false };
       const $ = (id) => document.getElementById(id);
       const safeNum = (v) => typeof v === 'number' && Number.isFinite(v) ? v : 0;
       const hasNum = (v) => typeof v === 'number' && Number.isFinite(v);
@@ -308,7 +311,7 @@
         $('totalTokensSub').textContent = '全部可用历史（账户/软件筛选）'; $('totalCostSub').textContent = cumulativeCost.unknown ? `${cumulativeCost.unknown} 条事件未计入金额` : '已定价用量';
         // Keep a useful hint when there are missing cycle bounds or unknown-account events.
         const missing = (state.data.accounts || []).filter((a) => !cycleFor(a.id)).length; const unknownCount = eventsAll().filter((e) => eventAccount(e) === 'unknown').length;
-        const notices = []; if (state.range === 'cycle' && state.cycleKey === 'current' && missing) notices.push(`${missing} 个账户缺少当前轮次，本轮无法确定`); if (unknownCount) notices.push(`${unknownCount} 条事件来自未知账户，已单独保留`); if (cost.unknown) notices.push(`${cost.unknown} 条事件无法匹配价格，金额未计入`); const modeLabel=state.pricingMode==='original'?'用户提供的原价与 Astra 推测缓存读取价':'官方当前 Standard API 价格'; $('rangeNotice').innerHTML = `<span class="icon">i</span><span>${esc(notices.length ? notices.join('；') : `用量来自本机保留的会话记录，价值按${modeLabel}估算。`)}</span>`;
+        const notices = []; if (state.range === 'cycle' && state.cycleKey === 'current' && missing) notices.push(`${missing} 个账户缺少当前轮次，本轮无法确定`); if (unknownCount) notices.push(`${unknownCount} 条事件来自未知账户，已单独保留`); if (cost.unknown) notices.push(`${cost.unknown} 条事件无法匹配价格，金额未计入`); const modeLabel=state.pricingMode==='original'?'用户指定的订阅折算价':'官方当前 Standard API 价格'; $('rangeNotice').innerHTML = `<span class="icon">i</span><span>${esc(notices.length ? notices.join('；') : `用量来自本机保留的会话记录，价值按${modeLabel}估算。`)}</span>`;
       }
       function renderQuota() {
         const accounts = state.data.accounts || []; if (!accounts.length) { $('quotaGrid').innerHTML = '<div class="card quota">暂无账户配额数据。</div>'; return; }
@@ -370,8 +373,8 @@
         $('modelTable').querySelector('tbody').innerHTML = (tbody || '<tr><td colspan="8" style="text-align:center;color:var(--muted)">暂无数据</td></tr>') + (names.length ? `<tr class="total-row"><td>总和</td><td>${fmtM(total.input)}</td><td>${fmtM(total.cached)}</td><td>${fmtM(total.write)}</td><td>${fmtM(total.output)}</td><td>${fmtM(total.tokens)}</td><td class="${total.unknown ? 'unknown' : ''}">${costLabel(total)}</td><td class="${total.unknown ? 'unknown' : ''}">${statusLabel(total)}</td></tr>` : '');
         $('detailsSub').textContent = `${names.length} 个模型 · ${list.length} 条事件 · token 单位：M tokens · 未知账户单独计算`;
         const scheme=(state.data.priceSchemes && state.data.priceSchemes[state.pricingMode]) || state.data.prices || {}, prices=scheme.models || {};
-        $('priceUpdated').textContent = scheme.updatedAt ? `${state.pricingMode==='original'?'原价':'官方现价'} · 更新于 ${fmtDateTime(scheme.updatedAt)}${state.pricingMode==='original'?' · Astra cache read 固定 1 $/M':''}` : '未提供价格更新时间';
-        $('priceNote').textContent=state.pricingMode==='original' ? '顺序为 input / cache read / cache write / output；全部原价均为用户指定的固定价格。' : '顺序为 input / cache read / cache write / output；按官方当前 Standard API 价格估算。';
+        $('priceUpdated').textContent = scheme.updatedAt ? `${state.pricingMode==='original'?'订阅折算价':'官方 API 价'} · 更新于 ${fmtDateTime(scheme.updatedAt)}${state.pricingMode==='original'?' · Astra cache read 固定 1 $/M':''}` : '未提供价格更新时间';
+        $('priceNote').textContent=state.pricingMode==='original' ? '顺序为 input / cache read / cache write / output；订阅折算价由用户指定，并作为看板默认估算口径。' : '顺序为 input / cache read / cache write / output；按官方当前 Standard API 价格估算。';
         const formatRate = (v) => hasNum(v) ? Number(v).toLocaleString('en-US', { maximumFractionDigits: 8, useGrouping: false }) : '—';
         $('priceTable').querySelector('tbody').innerHTML = Object.keys(prices).filter((m) => m === 'gpt-5.5' || /^gpt-5\.6(?:-|$)/.test(m) || /^gpt-6(?:-|$)/.test(m)).sort().map((m) => { const p = prices[m] || {}; const s = Array.isArray(p.short) ? p.short : []; const l = Array.isArray(p.long) ? p.long : []; const show = (x) => x.length >= 4 ? x.map(formatRate).join(' / ') : '—'; return `<tr><td style="text-align:left">${esc(m)}</td><td>${show(s)}</td><td>${show(l)}</td></tr>`; }).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--muted)">暂无价格数据</td></tr>';
       }
@@ -387,7 +390,7 @@
         const cost=(g)=>g.unknown?(g.cost>0?`小计 ${fmtUsd(g.cost)}`:'待定'):fmtUsd(g.cost);
         const cells=(g)=>`<td>${fmtM(g.input)}</td><td>${fmtM(g.cached)}</td><td>${fmtM(g.write)}</td><td>${fmtM(g.output)}</td><td>${fmtM(g.tokens)}</td><td class="${g.unknown?'unknown':''}">${cost(g)}</td>`;
         const rows=names.map((m,i)=>`<tr><td><div class="model-cell"><i class="model-dot" style="background:${COLORS[i%COLORS.length]}"></i><span>${esc(m)}</span></div></td>${cells(groups[m])}</tr>`).join('');
-        return `<article class="card table-card"><div class="table-head"><h3>${esc(account.label||account.id)}</h3><p>${list.length.toLocaleString('zh-CN')} 条事件 · ${fmtM(sum(list))} M tokens</p></div><div class="table-scroll"><table><thead><tr><th>模型</th><th>input<br>(M)</th><th>cache read<br>(M)</th><th>cache write<br>(M)</th><th>output<br>(M)</th><th>总数<br>(M)</th><th>等效价值</th></tr></thead><tbody>${rows||'<tr><td colspan="7" style="text-align:center;color:var(--muted)">当前范围暂无数据</td></tr>'}${names.length?`<tr class="total-row"><td>总和</td>${cells(total)}</tr>`:''}</tbody></table></div></article>`;
+        return `<article class="card table-card account-model-card"><div class="table-head"><h3>${esc(account.label||account.id)}</h3><p>${list.length.toLocaleString('zh-CN')} 条事件 · ${fmtM(sum(list))} M tokens</p></div><div class="table-scroll"><table><thead><tr><th>模型</th><th>input<br>(M)</th><th>cache read<br>(M)</th><th>cache write<br>(M)</th><th>output<br>(M)</th><th>总数<br>(M)</th><th>等效价值</th></tr></thead><tbody>${rows||'<tr><td colspan="7" style="text-align:center;color:var(--muted)">当前范围暂无数据</td></tr>'}${names.length?`<tr class="total-row"><td>总和</td>${cells(total)}</tr>`:''}</tbody></table></div></article>`;
       }
       function renderAccountDetails() { $('accountDetailsGrid').innerHTML=(state.data.accounts||[]).map(accountModelTable).join('')||'<div class="card quota">暂无账户数据</div>'; }
 
@@ -408,7 +411,7 @@
       function render() { if (!state.data) return; updateMetrics(); renderQuota(); renderDaily(); renderModelChart(); renderTables(); renderAccountDetails(); renderCycleEstimates(); renderWarnings(); $('csvBtn').disabled = false; $('updatedLabel').textContent = state.data.updatedAt ? `数据更新于 ${fmtDateTime(state.data.updatedAt)}` : '数据已加载'; $('lastRefresh').textContent = fmtDateTime(new Date()); }
       async function load() { if (state.loading) return; state.loading = true; $('refreshBtn').disabled = true; $('refreshBtn').textContent = '刷新中…'; $('errorBox').classList.add('hidden'); try { const res = await fetch('/api/data', { headers: { Accept: 'application/json' }, cache: 'no-store' }); if (!res.ok) throw new Error(`HTTP ${res.status}`); const data = await res.json(); if (!data || typeof data !== 'object') throw new Error('返回数据格式无效'); state.data = data; populateFilters(); render(); } catch (err) { $('errorText').textContent = `无法加载 /api/data：${err && err.message ? err.message : '未知错误'}。请确认后端服务正在运行。`; $('errorBox').classList.remove('hidden'); $('updatedLabel').textContent = '数据加载失败'; } finally { state.loading = false; $('refreshBtn').disabled = false; $('refreshBtn').textContent = '刷新数据'; } }
       function csvCell(v) { const numeric = typeof v === 'number' && Number.isFinite(v); let s = String(v == null ? '' : v); if (!numeric && /^[=+\-@\t\r]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g, '""') + '"'; }
-      function exportCsv() { const list = filteredEvents(); const rows = [['时间', '日期', '软件', '账户', '账户标识', '模型', '输入 token', '缓存 token', '写入 token', '输出 token', '总 token', '等效 API 价值 USD', '定价方式', '计价状态']]; list.forEach((e) => { const x = eventCost(e); rows.push([fmtDateTime(e.ts), localKey(e.ts), e.app || '', accountLabel(eventAccount(e)), eventAccount(e), modelName(e.model), safeNum(e.input), safeNum(e.cached), safeNum(e.write), safeNum(e.output), eventTokens(e), x.known ? x.cost.toFixed(6) : '', state.pricingMode==='original'?'原价':'官方现价', x.known ? '已定价' : '待定']); }); const blob = new Blob(['\ufeff' + rows.map((r) => r.map(csvCell).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `codex-usage-${state.pricingMode}-${state.range}-${localKey(new Date()) || 'export'}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
+      function exportCsv() { const list = filteredEvents(); const rows = [['时间', '日期', '软件', '账户', '账户标识', '模型', '输入 token', '缓存 token', '写入 token', '输出 token', '总 token', '等效 API 价值 USD', '定价方式', '计价状态']]; list.forEach((e) => { const x = eventCost(e); rows.push([fmtDateTime(e.ts), localKey(e.ts), e.app || '', accountLabel(eventAccount(e)), eventAccount(e), modelName(e.model), safeNum(e.input), safeNum(e.cached), safeNum(e.write), safeNum(e.output), eventTokens(e), x.known ? x.cost.toFixed(6) : '', state.pricingMode==='original'?'订阅折算价':'官方 API 价', x.known ? '已定价' : '待定']); }); const blob = new Blob(['\ufeff' + rows.map((r) => r.map(csvCell).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `codex-usage-${state.pricingMode}-${state.range}-${localKey(new Date()) || 'export'}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
       $('rangeControl').addEventListener('click', (e) => { const b = e.target.closest('button[data-range]'); if (!b) return; state.range = b.dataset.range; if (state.range === 'cycle') { state.cycleKey = 'current'; $('cycleSelect').value = 'current'; } resetClasses('#rangeControl button'); b.classList.add('active'); render(); }); $('accountFilter').addEventListener('change', (e) => { state.account = e.target.value; const selected = selectedHistoryCycle(); if (selected && selected.account !== state.account) { state.cycleKey = 'current'; state.range = 'cycle'; $('cycleSelect').value = 'current'; resetClasses('#rangeControl button'); document.querySelector('#rangeControl button[data-range="cycle"]').classList.add('active'); } render(); }); $('cycleSelect').addEventListener('change', (e) => { state.cycleKey = e.target.value; const selected = selectedHistoryCycle(); if (selected) { state.account = selected.account; $('accountFilter').value = [...$('accountFilter').options].some((o) => o.value === state.account) ? state.account : 'unknown'; } state.range = 'cycle'; resetClasses('#rangeControl button'); document.querySelector('#rangeControl button[data-range="cycle"]').classList.add('active'); render(); }); $('appFilter').addEventListener('change', (e) => { state.app = e.target.value; render(); }); $('pricingControl').addEventListener('click',(e)=>{const b=e.target.closest('button[data-pricing]');if(!b)return;state.pricingMode=b.dataset.pricing;resetClasses('#pricingControl button');b.classList.add('active');render();}); $('refreshBtn').addEventListener('click', load); $('csvBtn').addEventListener('click', exportCsv); load(); setInterval(load, 60000);
     })();
   </script>

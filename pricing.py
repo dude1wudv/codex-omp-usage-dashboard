@@ -13,13 +13,17 @@ ORIGINAL_RATES = {
     'gpt-5.6-sol': [5.0, 0.25, 6.25, 30.0],
 }
 
-def original_prices():
+def subscription_prices():
     models={model:{'short':rates,'long':None,'threshold':None} for model,rates in ORIGINAL_RATES.items()}
     models['gpt-6-astra']={'short':[10.0,1.0,12.5,50.0],'long':None,'threshold':None}
-    return {'source':'用户提供的固定原价',
+    return {'source':'用户指定的订阅折算价',
             'updatedAt':datetime.now(timezone.utc).isoformat(),
-            'basis':'Original / USD per 1M tokens / input, cache read, cache write, output',
+            'basis':'Subscription equivalent / USD per 1M tokens / input, cache read, cache write, output',
             'astraCacheReadSource':'user-fixed','models':models}
+
+def original_prices():
+    """Backward-compatible API name for the subscription valuation scheme."""
+    return subscription_prices()
 
 def parse_prices(text):
     section = text.split('### Standard pricing data', 1)[1].split('### Batch pricing data', 1)[0]

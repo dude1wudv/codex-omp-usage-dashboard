@@ -36,7 +36,7 @@ python server.py
 - 总和模型明细以及两个账户各自的独立明细，Token 表格使用 M 为单位。
 - 最近已观测重置周期的总可用等效 API 价值推测、折线图和数据表。
 - 当前 OpenAI Standard 价目表中的 GPT-5.5、GPT-5.6 系列和 GPT-6 系列。
-- “官方现价 / 原价”一键切换；卡片、账户明细、周期推测和 CSV 会同步使用所选口径。
+- “订阅折算价 / 官方 API 价”一键切换；默认使用订阅折算价，卡片、账户明细、周期推测和 CSV 会同步使用所选口径。
 - 本轮、最近 7 天、30 天、全部历史、账户、软件和历史轮次筛选，以及 CSV 导出。
 
 账户默认显示为 `Team A · Codex App` 和 `Team B · OMP`，可修改 `config.json` 中的 `labels`。
@@ -56,9 +56,9 @@ Codex 数据来自 `~/.codex/sessions` 与 `~/.codex/archived_sessions`，只纳
  + 输出 × 输出单价) / 1,000,000
 ```
 
-适用模型单次请求超过 272,000 输入 Token 时使用官方长上下文价格。输出已经包含 reasoning，不重复相加。价格来源是 [OpenAI 官方 Standard API 价格](https://developers.openai.com/api/docs/pricing)；历史也按当前价格重估，因此结果是比较指标，不是订阅扣款或实际 API 账单。未知模型或缺失计费类别显示“待定”。
+官方 API 价对照项来自 [OpenAI 官方 Standard API 价格](https://developers.openai.com/api/docs/pricing)；适用模型单次请求超过 272,000 输入 Token 时使用官方长上下文价格。输出已经包含 reasoning，不重复相加。历史会按当前选择的价格口径重估，因此结果是比较指标，不是订阅扣款或实际 API 账单。未知模型或缺失计费类别显示“待定”。
 
-“原价”是用户提供的另一套比较口径，并非 OpenAI 官方价格。单位均为 USD / 1M tokens：
+看板默认使用用户指定的“订阅折算价”。该口径基于订阅内模型权重可能尚未随 API 降价同步调整的假设，并非 OpenAI 公布的订阅扣费价格。单位均为 USD / 1M tokens：
 
 | 模型 | input | output | cache write | cache read |
 | --- | ---: | ---: | ---: | ---: |
@@ -67,7 +67,7 @@ Codex 数据来自 `~/.codex/sessions` 与 `~/.codex/archived_sessions`，只纳
 | GPT-5.6 Sol | 5 | 30 | 6.25 | 0.25 |
 | GPT-6 Astra | 10 | 50 | 12.5 | 1 |
 
-Astra 的原价 cache read 固定为 1 USD / 1M tokens，不再根据每周限额动态推测。
+Astra 的 cache read 固定为 1 USD / 1M tokens。
 
 整轮总可用等效价值推测公式：
 
